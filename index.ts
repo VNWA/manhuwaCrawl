@@ -120,7 +120,7 @@ async function importMangaFromCrawler() {
           cover_url: image,
           doujinshi: "",
           pilot: detail.description,
-          posted_by: 1,
+          posted_by: 2,
           chapters: detail.chapters.map((ch) => ({
             title: ch.title,
             images: ch.images,
