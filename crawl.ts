@@ -28,7 +28,7 @@ async function getChapterImages(page: Page, chapterUrl: string, title: string): 
     const $ = cheerio.load(await page.content());
     const images = $(".page-break.no-gaps img.wp-manga-chapter-img")
         .map((_, el) => ($(el).attr("src") || "").trim())
-        .get();
+        .get().slice(1);
     return images;
 }
 
