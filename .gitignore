@@ -5,7 +5,7 @@ node_modules
 out
 dist
 *.tgz
-
+deploy.zip
 # code coverage
 coverage
 *.lcov
