@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Manga {
+  id                BigInt      @id @default(autoincrement())
+  name              String
+  other_name        String?
+  cover_url         String      @default("no-cover.png")
+  slug              String
+  doujinshi         String?
+  pilot             String?
+  note              String?
+  like_count        BigInt      @default(0)
+  favorite_count    BigInt      @default(0)
+  comment_count     BigInt      @default(0)
+  rating_average    BigInt      @default(0)
+  rating_count      Float       @default(0.0)
+  view              BigInt      @default(0)
+  view_month        BigInt      @default(0)
+  view_day          BigInt      @default(0)
+  status_id         BigInt      @default(0)
+  password          String?
+  is_public         Boolean     @default(true)
+  is_adult_content  Boolean     @default(false)
+  posted_by         BigInt
+  release_datetime  DateTime?
+  created_at        DateTime?
+  updated_at        DateTime?
+  latest_chapter_id BigInt?
+  dislike_count     BigInt      @default(0)
+  hot               Boolean     @default(false)
+
+  chapters          Chapter[]
+  genres            MangaHasGenre[]
+
+  @@map("mangas") // bảng trong DB tên "mangas"
+}
+
+model Chapter {
+  id            BigInt     @id @default(autoincrement())
+  name          String
+  slug          String
+  order         Int?
+  comment_count Int        @default(0)
+  is_public     Boolean    @default(true)
+  manga_id      BigInt
+  posted_by     BigInt
+  created_at    DateTime?
+  updated_at    DateTime?
+  is_auth       Boolean    @default(false)
+  view          BigInt     @default(0)
+  password      String?
+  views         BigInt     @default(0)
+
+  manga         Manga      @relation(fields: [manga_id], references: [id])
+  serverChapters ServerChapter[]
+
+  @@map("chapters")
+}
+
+model Genre {
+  id          BigInt @id @default(autoincrement())
+  name        String
+  slug        String
+  description String?
+  created_at  DateTime?
+  updated_at  DateTime?
+
+  mangas      MangaHasGenre[]
+
+  @@map("genres") // map đúng tên bảng trong DB
+}
+
+model MangaHasGenre {
+  id       BigInt @id @default(autoincrement())
+  manga_id BigInt
+  genre_id BigInt
+
+  manga    Manga  @relation(fields: [manga_id], references: [id])
+  genre    Genre  @relation(fields: [genre_id], references: [id])
+
+  @@map("manga_has_genre") // map đúng tên bảng trong DB
+}
+
+model ServerChapter {
+  id         BigInt @id @default(autoincrement())
+  content    String?
+  server_id  BigInt
+  chapter_id BigInt
+  created_at DateTime?
+  updated_at DateTime?
+
+  chapter    Chapter @relation(fields: [chapter_id], references: [id])
+
+  @@map("server_chapter") // map đúng tên bảng trong DB
+}
