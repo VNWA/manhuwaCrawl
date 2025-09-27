@@ -1,0 +1,16 @@
+Manga lỗi [Signed, Sealed, Mistaken (Uncensored)]  - 
+Invalid `prisma.manga.findFirst()` invocation:
+
+
+Authentication failed against database server, the provided database credentials for `root` are not valid.
+
+Please make sure to provide valid database credentials for the database server at the configured address.
+Manga lỗi [Signed, Sealed, Mistaken (Uncensored)]  - 
+Invalid `this.prisma.manga.findFirst()` invocation in
+/home/nhatnguyen/code/manga/crawl/services/manga.service.ts:39:43
+
+  36 
+  37 async importMangaFromCrawler(data: MangaInput) {
+  38   try {
+→ 39     let manga = await this.prisma.manga.findFirst(
+Database `testaaa` does not exist

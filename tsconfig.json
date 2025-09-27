@@ -5,6 +5,7 @@
     "target": "ES2022",                     // nên lên 2022 cho Node 18+ / Bun
     "module": "CommonJS",
     "moduleResolution": "Node",
+    "esModuleInterop": true,
     "outDir": "dist",
     "rootDir": "./",
     "jsx": "react-jsx",

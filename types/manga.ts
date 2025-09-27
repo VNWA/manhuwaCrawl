@@ -14,6 +14,7 @@ export interface MangaChapter {
     artists: string[];
     genres: string[];
     types: string;
+    avatar: string;
     description: string;
     tags: string[];
     release: string;

@@ -1,4 +1,9 @@
 import { PrismaClient } from "@prisma/client";
+import { Logger } from "../utils/logger";
+import { Storage } from "./minio.storage";
+import pLimit from "p-limit";
+import fetch from "node-fetch";
+import { Readable } from "stream";
 
 interface ChapterInput {
   title: string;
@@ -25,28 +30,56 @@ interface MangaInput {
 
 export class MangaService {
   private prisma: PrismaClient;
+  private imageCache: Map<string, string>; // tạm cache url -> MinIO
 
   constructor(prismaClient?: PrismaClient) {
     this.prisma = prismaClient || new PrismaClient();
+    this.imageCache = new Map();
   }
 
   private getRndInteger(min: number, max: number) {
     return Math.floor(Math.random() * (max - min)) + min;
   }
 
+  private async uploadImage(imgUrl: string): Promise<string | null> {
+    if (this.imageCache.has(imgUrl)) return this.imageCache.get(imgUrl)!;
+
+    try {
+      const res = await fetch(imgUrl);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const arrayBuffer = await res.arrayBuffer();
+      const bufferStream = Readable.from(Buffer.from(arrayBuffer));
+      const ext = imgUrl.split(".").pop()?.split(/\?|#/)[0] || "jpg";
+      const filename = `${Date.now()}_${Math.floor(Math.random() * 10000)}.${ext}`;
+      const minioUrl = await Storage.put(filename, bufferStream);
+
+      this.imageCache.set(imgUrl, minioUrl);
+      return minioUrl;
+    } catch (err) {
+      Logger.error(`Lỗi tải/upload ảnh: ${imgUrl} - ${err}`);
+      return null;
+    }
+  }
+
   async importMangaFromCrawler(data: MangaInput) {
     try {
-      let manga = await this.prisma.manga.findFirst({
-        where: { slug: data.slug },
-      });
+      Logger.info(`Kiểm tra manga: ${data.name}`);
+
+      let manga = await this.prisma.manga.findFirst({ where: { slug: data.slug } });
 
       if (!manga) {
+        Logger.info(`Chưa có, tạo manga mới: ${data.name}`);
+
+        const coverUrl = data.cover_url
+          ? await this.uploadImage(data.cover_url)
+          : "no-cover.png";
+
         manga = await this.prisma.manga.create({
           data: {
             name: data.name,
             slug: data.slug,
             other_name: data.other_name,
-            cover_url: data.cover_url || "no-cover.png",
+            cover_url: coverUrl || "no-cover.png",
             doujinshi: data.doujinshi,
             pilot: data.pilot,
             like_count: this.getRndInteger(1000, 5000),
@@ -58,6 +91,9 @@ export class MangaService {
             updated_at: new Date(),
           },
         });
+        Logger.success(`Đã tạo manga mới: ${manga.name}`);
+      } else {
+        Logger.warn(`Manga đã tồn tại: ${manga.name}`);
       }
 
       // Import chapters
@@ -68,44 +104,46 @@ export class MangaService {
 
           const slug = ch.title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
-          if (ch.images && ch.images.length > 0) {
-            let chapter = await this.prisma.chapter.findFirst({
-              where: {
+          let chapter = await this.prisma.chapter.findFirst({
+            where: { manga_id: manga.id, OR: [{ name: ch.title }, { slug }] },
+          });
+
+          if (!chapter) {
+            Logger.info(`Thêm chapter mới: ${ch.title} (${ch.images?.length || 0} ảnh)`);
+            chapter = await this.prisma.chapter.create({
+              data: {
+                name: ch.title,
+                slug,
                 manga_id: manga.id,
-                OR: [{ name: ch.title }, { slug }],
+                views: ch.view,
+                order: i + 1,
+                posted_by: data.posted_by,
+                created_at: new Date(),
+                updated_at: new Date(),
               },
             });
+          }
 
-            if (!chapter) {
-              chapter = await this.prisma.chapter.create({
-                data: {
-                  name: ch.title,
-                  slug,
-                  manga_id: manga.id,
-                  views: ch.view,
-                  order: i + 1,
-                  posted_by: data.posted_by,
-                  created_at: new Date(),
-                  updated_at: new Date(),
-                },
-              });
-            }
+          const existServer = await this.prisma.serverChapter.findFirst({
+            where: { chapter_id: chapter.id, server_id: 1 },
+          });
 
-            const existServer = await this.prisma.serverChapter.findFirst({
-              where: { chapter_id: chapter.id, server_id: 1 },
+          if (!existServer && ch.images?.length) {
+            const limit = pLimit(5); // giới hạn 5 ảnh chạy song song
+            const uploadedImages = await Promise.all(
+              ch.images.map((imgUrl) => limit(() => this.uploadImage(imgUrl)))
+            );
+
+            const finalImages = uploadedImages.filter(Boolean) as string[];
+            await this.prisma.serverChapter.create({
+              data: {
+                chapter_id: chapter.id,
+                server_id: 1,
+                content: finalImages.join("\n"),
+                created_at: new Date(),
+                updated_at: new Date(),
+              },
             });
-
-            if (!existServer) {
-              await this.prisma.serverChapter.create({
-                data: {
-                  chapter_id: chapter.id,
-                  server_id: 1,
-                  content: ch.images.join("\n"),
-                  created_at: new Date(),
-                  updated_at: new Date(),
-                },
-              });
-            }
           }
         }
       }
@@ -116,12 +154,7 @@ export class MangaService {
           let genre = await this.prisma.genre.findFirst({ where: { slug: g.slug } });
           if (!genre) {
             genre = await this.prisma.genre.create({
-              data: {
-                name: g.name,
-                slug: g.slug,
-                created_at: new Date(),
-                updated_at: new Date(),
-              },
+              data: { name: g.name, slug: g.slug, created_at: new Date(), updated_at: new Date() },
             });
           }
 
@@ -137,10 +170,11 @@ export class MangaService {
         }
       }
 
+      Logger.success(`Import hoàn tất: ${manga.name}`);
       return manga;
     } catch (error) {
-      console.error("❌ Error while importing manga:", error);
-      throw error; // để phía gọi có thể xử lý
+      Logger.error(`Error while importing manga: ${data.name} - ${error}`);
+      throw error;
     }
   }
 }
