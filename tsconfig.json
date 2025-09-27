@@ -1,29 +1,33 @@
 {
   "compilerOptions": {
-    // Environment setup & latest features
+    /* Environment setup */
     "lib": ["ESNext"],
-    "target": "ESNext",
-    "module": "Preserve",
-    "moduleDetection": "force",
+    "target": "ES2022",                     // nên lên 2022 cho Node 18+ / Bun
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "outDir": "dist",
+    "rootDir": "./",
     "jsx": "react-jsx",
     "allowJs": true,
 
-    // Bundler mode
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "verbatimModuleSyntax": true,
-    "noEmit": true,
+    /* Paths (optional nếu bạn có alias import) */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
 
-    // Best practices
+    /* Best practices */
     "strict": true,
     "skipLibCheck": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
 
-    // Some stricter flags (disabled by default)
+    /* Optional stricter flags */
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
-  }
+  },
+  "include": ["./**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }

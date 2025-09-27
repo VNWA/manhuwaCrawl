@@ -1,10 +1,16 @@
 {
   "name": "crawl",
   "module": "index.ts",
-  "type": "module",
   "private": true,
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "javascript-obfuscator": "^4.1.1",
+    "tsc-alias": "^1.8.16"
+  },
+  "scripts": {
+    "build": "tsc && tsc-alias && javascript-obfuscator dist --output dist --compact true --control-flow-flattening true",
+    "start": "node dist/index.js",
+    "deploy:zip": "rm -f deploy.zip && npm run build && zip -r deploy.zip dist package.json bun.lock .env README.md"
   },
   "peerDependencies": {
     "typescript": "^5"
