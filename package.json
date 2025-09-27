@@ -10,7 +10,7 @@
   "scripts": {
     "build": "tsc && tsc-alias && javascript-obfuscator dist --output dist --compact true --control-flow-flattening true",
     "start": "node dist/index.js",
-    "build:zip": "rm -f deploy.zip && npm run build && zip -r deploy.zip dist package.json bun.lock .env README.md"
+    "build:zip": "rm -f deploy.zip && npm run build && zip -r deploy.zip dist prisma package.json bun.lock .env README.md"
   },
   "peerDependencies": {
     "typescript": "^5"
