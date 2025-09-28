@@ -4,7 +4,11 @@ import { Storage } from "./minio.storage";
 import pLimit from "p-limit";
 import fetch from "node-fetch";
 import { Readable } from "stream";
+import moment from "moment-timezone";
 
+const getNow = () => {
+  return moment().tz("America/Los_Angeles").toDate();
+}
 interface ChapterInput {
   title: string;
   images?: string[];
@@ -87,8 +91,8 @@ export class MangaService {
             rating_average: this.getRndInteger(3, 5),
             view: this.getRndInteger(100000, 1000000),
             posted_by: data.posted_by,
-            created_at: new Date(),
-            updated_at: new Date(),
+            created_at: getNow(),
+            updated_at: getNow(),
           },
         });
         Logger.success(`Đã tạo manga mới: ${manga.name}`);
@@ -118,8 +122,8 @@ export class MangaService {
                 views: ch.view,
                 order: i + 1,
                 posted_by: data.posted_by,
-                created_at: new Date(),
-                updated_at: new Date(),
+                created_at: getNow(),
+                updated_at: getNow(),
               },
             });
           }
@@ -140,8 +144,8 @@ export class MangaService {
                 chapter_id: chapter.id,
                 server_id: 1,
                 content: finalImages.join("\n"),
-                created_at: new Date(),
-                updated_at: new Date(),
+                created_at: getNow(),
+                updated_at: getNow(),
               },
             });
           }
@@ -154,7 +158,7 @@ export class MangaService {
           let genre = await this.prisma.genre.findFirst({ where: { slug: g.slug } });
           if (!genre) {
             genre = await this.prisma.genre.create({
-              data: { name: g.name, slug: g.slug, created_at: new Date(), updated_at: new Date() },
+              data: { name: g.name, slug: g.slug, created_at: getNow(), updated_at: getNow() },
             });
           }
 

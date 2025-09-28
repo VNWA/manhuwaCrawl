@@ -10,16 +10,21 @@
   "scripts": {
     "build": "tsc && tsc-alias && javascript-obfuscator dist --output dist --compact true --control-flow-flattening true",
     "start": "node dist/index.js",
-    "build:zip": "rm -f deploy.zip && npm run build && zip -r deploy.zip dist prisma package.json bun.lock .env README.md"
+    "build:zip": "rm -f deploy.zip  && npm run build && zip -r deploy.zip dist prisma data package.json bun.lock .env README.md"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",
+    "@types/express": "^5.0.3",
     "@types/node-fetch": "^2.6.13",
+    "body-parser": "^2.2.0",
     "cheerio": "^1.1.2",
+    "express": "^5.1.0",
+    "express-session": "^1.18.2",
     "minio": "^8.0.6",
+    "moment-timezone": "^0.6.0",
     "node-fetch": "^3.3.2",
     "p-limit": "^7.1.1",
     "prisma": "^6.16.2",
