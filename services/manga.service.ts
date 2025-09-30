@@ -7,9 +7,8 @@ import { Readable } from "stream";
 import moment from "moment-timezone";
 
 const getNow = () => {
-  return moment().tz("America/Los_Angeles").toDate();
-}
-interface ChapterInput {
+  return moment().tz("Asia/Ho_Chi_Minh").add(7, "hours").toISOString(true);
+}; interface ChapterInput {
   title: string;
   images?: string[];
   view: number;
@@ -125,6 +124,10 @@ export class MangaService {
                 created_at: getNow(),
                 updated_at: getNow(),
               },
+            });
+            await this.prisma.manga.update({
+              where: { id: manga.id },
+              data: { latest_chapter_id: chapter.id, updated_at: getNow() },
             });
           }
 

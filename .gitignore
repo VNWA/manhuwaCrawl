@@ -6,6 +6,7 @@ out
 dist
 *.tgz
 deploy.zip
+data/urls.json
 # code coverage
 coverage
 *.lcov

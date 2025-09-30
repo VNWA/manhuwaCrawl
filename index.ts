@@ -3,6 +3,7 @@ import readline from "readline";
 import { HistoryItem } from "./types/types";
 import { History } from "utils/history";
 import { crawl } from "crawl";
+import moment from "moment-timezone";
 
 const history = new History();
 
@@ -10,7 +11,9 @@ const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
 });
-
+const getNow = () => {
+    return moment().tz("Asia/Ho_Chi_Minh").format("YYYY-MM-DD HH:mm:ss");
+  };
 function menu() {
     console.log(`
 === QUẢN LÝ LỊCH SỬ CRAWL ===
@@ -135,6 +138,7 @@ async function handleChoice(choice: string) {
                 break;
 
             case "0":
+                console.log(getNow());
                 console.log("👋 Thoát chương trình...");
                 rl.close();
                 process.exit(0);
